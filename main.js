@@ -1,6 +1,6 @@
 const WIDTH = 50
 const HEIGHT = 40
-const SPEED = 500
+const SPEED = 250
 
 const DIRECTIONS = {
     left: 1,
@@ -24,8 +24,9 @@ const OPPOSITES = {
 }
 
 const coord = (x, y) => ({x, y})
+const snakePiece = (x, y, direction=DIRECTIONS.left) => ({...coord(x, y), direction})
 
-let SNAKE = [ coord(25, 19), coord(26, 19), coord(27, 19) ]
+let SNAKE = [ snakePiece(25, 19), snakePiece(26, 19), snakePiece(27, 19) ]
 
 let CURRENT_DIRECTION = DIRECTIONS.left
 window.onkeydown = (event) => {
@@ -64,14 +65,21 @@ const drawField = (snake) => {
 }
 
 const walkMethods = {
-    [DIRECTIONS.right]: ({x, y}) => coord(x + 1, y),
-    [DIRECTIONS.left]: ({x, y}) => coord(x - 1, y),
-    [DIRECTIONS.up]: ({x, y}) => coord(x, y - 1),
-    [DIRECTIONS.down]: ({x, y}) => coord(x, y + 1),
+    [DIRECTIONS.right]: ({x, y}) => snakePiece(x + 1, y, DIRECTIONS.right),
+    [DIRECTIONS.left]: ({x, y}) => snakePiece(x - 1, y, DIRECTIONS.left),
+    [DIRECTIONS.up]: ({x, y}) => snakePiece(x, y - 1, DIRECTIONS.up),
+    [DIRECTIONS.down]: ({x, y}) => snakePiece(x, y + 1, DIRECTIONS.down),
 }
 
 const walk = snake => {
-    return snake.map(walkMethods[CURRENT_DIRECTION])
+    return snake.map((piece, idx, snake) => {
+        if (idx === 0) {
+            return walkMethods[CURRENT_DIRECTION](piece)    
+        }
+
+        const direction = snake[idx - 1].direction
+        return walkMethods[direction](piece)
+    })
 }
 
 const play = () => {

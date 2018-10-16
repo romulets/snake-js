@@ -5,7 +5,7 @@
 #main td {
     width: 8px;
     height: 8px;
-    border: 1px solid #ccc;
+    /* border: 1px solid #ccc; */
 }
 
 .snake-body {
