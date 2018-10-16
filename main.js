@@ -1,6 +1,6 @@
 const WIDTH = 50
 const HEIGHT = 40
-const SPEED = 250
+const SPEED = 50
 
 const DIRECTIONS = {
     left: 1,
@@ -23,7 +23,7 @@ const OPPOSITES = {
     [DIRECTIONS.right]: DIRECTIONS.left
 }
 
-const coord = (x, y) => ({x, y})
+const coord = (x, y) => ({x: x < 0 ? WIDTH + x : x % WIDTH, y: y < 0 ? HEIGHT + y : y % HEIGHT})
 const snakePiece = (x, y, direction=DIRECTIONS.left) => ({...coord(x, y), direction})
 const random = max => Math.floor(Math.random() * max)
 const generateFood = () => coord(random(WIDTH), random(HEIGHT))
@@ -79,6 +79,8 @@ const walkMethods = {
 }
 
 const walk = snake => {
+    const lastPiece = snake[snake.length - 1]
+
     snake = snake.map((piece, idx, snake) => {
         if (idx === 0) {
             return walkMethods[CURRENT_DIRECTION](piece)    
@@ -89,10 +91,10 @@ const walk = snake => {
     })
 
     if(coordIsBody(FOOD, snake)) {
-        const lastPiece = snake[snake.length - 1]
-        snake.push(walkMethods[lastPiece.direction](lastPiece))
+        snake.push(lastPiece)
     }
 
+    console.log(snake)
     return snake
 }
 
