@@ -27,32 +27,20 @@ const coord = (x, y) => ({x: x < 0 ? WIDTH + x : x % WIDTH, y: y < 0 ? HEIGHT + 
 const snakePiece = (x, y, direction=DIRECTIONS.left) => ({...coord(x, y), direction})
 const random = max => Math.floor(Math.random() * max)
 const generateFood = () => coord(random(WIDTH), random(HEIGHT))
-
-let SNAKE = [ snakePiece(25, 19), snakePiece(26, 19), snakePiece(27, 19) ]
-let FOOD = generateFood()
-let CURRENT_DIRECTION = DIRECTIONS.left
-
-window.onkeydown = (event) => {
-    const newDirection = DIRECTIONS_KEYS[event.key]
-    if (newDirection && OPPOSITES[CURRENT_DIRECTION] !== newDirection) {
-        CURRENT_DIRECTION = newDirection
-    }
-}
-
 const cmpCoord = (a, b) => a.x === b.x && a.y === b.y
 const coordIsBody = (coord, snake) => snake.filter(cmpCoord.bind(null, coord)).length > 0
 
-const applySnakeRules = (snake, cell) => {
-    if(coordIsBody(cell.coord, snake)) {
+const applySnakeRules = (snake, food, cell) => {
+    if(cmpCoord(cell.coord, snake[0])) {
+        cell.classList.add('snake-head')
+    } else if(coordIsBody(cell.coord, snake)) {
         cell.classList.add('snake-body')
-    }
-
-    if (cmpCoord(cell.coord, FOOD)) {
+    } else if (cmpCoord(cell.coord, food)) {
         cell.classList.add('food')
     }
 }
 
-const drawField = (snake) => {
+const drawField = (snake, food) => {
     const main = document.getElementById('main')
     
     const table = document.createElement('table')
@@ -61,7 +49,7 @@ const drawField = (snake) => {
         for (row = 0; row < WIDTH; row++) {
             const cell = document.createElement('td')
             cell.coord = coord(row, col)
-            applySnakeRules(snake, cell)
+            applySnakeRules(snake, food, cell)
             line.appendChild(cell)
         }
         table.appendChild(line)
@@ -78,38 +66,81 @@ const walkMethods = {
     [DIRECTIONS.down]: ({x, y}) => snakePiece(x, y + 1, DIRECTIONS.down),
 }
 
-const walk = snake => {
+const walk = (snake, food, headDirection) => {
     const lastPiece = snake[snake.length - 1]
 
     snake = snake.map((piece, idx, snake) => {
         if (idx === 0) {
-            return walkMethods[CURRENT_DIRECTION](piece)    
+            return walkMethods[headDirection](piece)    
         }
 
         const direction = snake[idx - 1].direction
         return walkMethods[direction](piece)
     })
 
-    if(coordIsBody(FOOD, snake)) {
+    if (coordIsBody(snake[0], snake.slice(1))) {
+        return null
+    }
+
+    if(coordIsBody(food, snake)) {
         snake.push(lastPiece)
     }
 
-    console.log(snake)
     return snake
 }
 
-const handleFood = (snake, food) => {
+const handleFood = (snake, food, score) => {
     if(coordIsBody(food, snake)) {
-        return generateFood()
+        score += 1
+        return { food: generateFood(), score }
     }
 
-    return food
+    return { food, score }
+}
+
+const updateScore = score => {
+    document.getElementById('score').innerText = score
+}
+
+const handleCrash = intervalId => {
+    clearInterval(intervalId)
+    setTimeout(() => {
+        const playAgain = confirm('You crashed. Want to play again?')
+        if (playAgain) {
+            play()
+        }
+    }, 15)
 }
 
 const play = () => {
-    drawField(SNAKE)
-    SNAKE = walk(SNAKE)
-    FOOD = handleFood(SNAKE, FOOD)
+
+    let score = 0
+    let snake = [ snakePiece(25, 19), snakePiece(26, 19), snakePiece(27, 19) ]
+    let food = generateFood()
+    let currentDirection = DIRECTIONS.left
+
+    window.onkeydown = (event) => {
+        const newDirection = DIRECTIONS_KEYS[event.key]
+        if (newDirection && OPPOSITES[currentDirection] !== newDirection) {
+            currentDirection = newDirection
+        }
+    }
+
+    const intervalId = setInterval(() => {
+        drawField(snake, food)    
+
+        const newSnake = walk(snake, food, currentDirection)
+        if (newSnake === null) {
+            drawField(snake, food)
+            handleCrash(intervalId)
+            return
+        }
+
+        snake = newSnake;
+        
+        ({ food, score } = handleFood(snake, food, score))
+        updateScore(score)
+    }, SPEED)
 }
 
-setInterval(play, SPEED)
+play()

@@ -10,8 +10,13 @@
 
 .food {
     background: red;
+    border-radius: 8px;
 }
 
 .snake-body {
+    background: lightgreen;
+}
+
+.snake-head {
     background: green;
 }
