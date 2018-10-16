@@ -25,10 +25,13 @@ const OPPOSITES = {
 
 const coord = (x, y) => ({x, y})
 const snakePiece = (x, y, direction=DIRECTIONS.left) => ({...coord(x, y), direction})
+const random = max => Math.floor(Math.random() * max)
+const generateFood = () => coord(random(WIDTH), random(HEIGHT))
 
 let SNAKE = [ snakePiece(25, 19), snakePiece(26, 19), snakePiece(27, 19) ]
-
+let FOOD = generateFood()
 let CURRENT_DIRECTION = DIRECTIONS.left
+
 window.onkeydown = (event) => {
     const newDirection = DIRECTIONS_KEYS[event.key]
     if (newDirection && OPPOSITES[CURRENT_DIRECTION] !== newDirection) {
@@ -42,6 +45,10 @@ const coordIsBody = (coord, snake) => snake.filter(cmpCoord.bind(null, coord)).l
 const applySnakeRules = (snake, cell) => {
     if(coordIsBody(cell.coord, snake)) {
         cell.classList.add('snake-body')
+    }
+
+    if (cmpCoord(cell.coord, FOOD)) {
+        cell.classList.add('food')
     }
 }
 
@@ -72,7 +79,7 @@ const walkMethods = {
 }
 
 const walk = snake => {
-    return snake.map((piece, idx, snake) => {
+    snake = snake.map((piece, idx, snake) => {
         if (idx === 0) {
             return walkMethods[CURRENT_DIRECTION](piece)    
         }
@@ -80,11 +87,27 @@ const walk = snake => {
         const direction = snake[idx - 1].direction
         return walkMethods[direction](piece)
     })
+
+    if(coordIsBody(FOOD, snake)) {
+        const lastPiece = snake[snake.length - 1]
+        snake.push(walkMethods[lastPiece.direction](lastPiece))
+    }
+
+    return snake
+}
+
+const handleFood = (snake, food) => {
+    if(coordIsBody(food, snake)) {
+        return generateFood()
+    }
+
+    return food
 }
 
 const play = () => {
     drawField(SNAKE)
     SNAKE = walk(SNAKE)
+    FOOD = handleFood(SNAKE, FOOD)
 }
 
 setInterval(play, SPEED)
