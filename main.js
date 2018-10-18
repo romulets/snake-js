@@ -1,6 +1,6 @@
 const WIDTH = 50
 const HEIGHT = 40
-const SPEED = 50
+const SPEED = 100
 
 const DIRECTIONS = {
     left: 1,
@@ -118,16 +118,22 @@ const play = () => {
     let snake = [ snakePiece(25, 19), snakePiece(26, 19), snakePiece(27, 19) ]
     let food = generateFood()
     let currentDirection = DIRECTIONS.left
+    let changingDirection = null
 
     window.onkeydown = (event) => {
         const newDirection = DIRECTIONS_KEYS[event.key]
         if (newDirection && OPPOSITES[currentDirection] !== newDirection) {
-            currentDirection = newDirection
+            changingDirection = newDirection
         }
     }
 
     const intervalId = setInterval(() => {
         drawField(snake, food)    
+
+        if (changingDirection) {
+            currentDirection = changingDirection
+            changingDirection = null
+        }
 
         const newSnake = walk(snake, food, currentDirection)
         if (newSnake === null) {
