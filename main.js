@@ -1,12 +1,13 @@
 const WIDTH = 50
 const HEIGHT = 40
-const SPEED = 100
+const SPEED = 10
+const AUTO_PLAY = true
 
 const DIRECTIONS = {
-    left: 1,
-    right: 2,
-    up: 3,
-    down: 4,
+    left: 'left',
+    right: 'right',
+    up: 'up',
+    down: 'down',
 }
 
 const DIRECTIONS_KEYS = {
@@ -112,6 +113,92 @@ const handleCrash = intervalId => {
     }, 15)
 }
 
+const avoidBody = (direction, snake, attemptsHistory = []) => {
+    const head = snake[0]
+    const headDirection = head.direction
+
+    if (attemptsHistory.length === 4) {
+        if (!coordIsBody(walkMethods[headDirection](head), snake)) {
+            return headDirection
+        }
+        
+        return direction
+    }
+
+
+    if (coordIsBody(walkMethods[direction](head), snake)) {
+        
+        if (direction ===  DIRECTIONS.up) {
+            if (headDirection === DIRECTIONS.up) {
+                direction = DIRECTIONS.left
+            } else if (headDirection === DIRECTIONS.left || headDirection === DIRECTIONS.right) {
+                direction = DIRECTIONS.down
+            }
+        } else if (direction ===  DIRECTIONS.down) {
+            if (headDirection === DIRECTIONS.down) {
+                direction = DIRECTIONS.left
+            } else if (headDirection === DIRECTIONS.left || headDirection === DIRECTIONS.right) {
+                direction = DIRECTIONS.up
+            }
+        }  else if (direction ===  DIRECTIONS.left) {
+            if (headDirection === DIRECTIONS.left) {
+                direction = DIRECTIONS.up
+            } else if (headDirection === DIRECTIONS.up || headDirection === DIRECTIONS.down) {
+                direction = DIRECTIONS.right
+            }
+        } else if (direction ===  DIRECTIONS.right) {
+            if (headDirection === DIRECTIONS.right) {
+                direction = DIRECTIONS.up
+            } else if (headDirection === DIRECTIONS.up || headDirection === DIRECTIONS.down) {
+                direction = DIRECTIONS.left
+            }
+        }
+
+        direction = avoidBody(direction, snake, [...attemptsHistory, direction])
+    }
+
+    return direction
+}
+
+const autoPlayNextDirection = (snake, food) => {
+    const head = snake[0]
+    let nextDirection = null
+
+    if(food.y === head.y) {
+        if (food.x > head.x) {
+            if (head.direction === DIRECTIONS.left) {
+                nextDirection = DIRECTIONS.up
+            } else {
+                nextDirection = DIRECTIONS.right
+            }
+        } else {
+            if (head.direction === DIRECTIONS.right) {
+                nextDirection = DIRECTIONS.up
+            } else {
+                nextDirection = DIRECTIONS.left
+            }
+        }
+    } else {
+        if (food.y > head.y) {
+            if (head.direction === DIRECTIONS.up) {
+                nextDirection = DIRECTIONS.right
+            } else {
+                nextDirection = DIRECTIONS.down
+            }
+        } else {
+            if (head.direction === DIRECTIONS.down) {
+                nextDirection = DIRECTIONS.right
+            } else {
+                nextDirection = DIRECTIONS.up
+            }
+        }
+    }
+
+    nextDirection = avoidBody(nextDirection, snake)
+
+    return nextDirection
+}
+
 const play = () => {
 
     let score = 0
@@ -120,10 +207,12 @@ const play = () => {
     let currentDirection = DIRECTIONS.left
     let changingDirection = null
 
-    window.onkeydown = (event) => {
-        const newDirection = DIRECTIONS_KEYS[event.key]
-        if (newDirection && OPPOSITES[currentDirection] !== newDirection) {
-            changingDirection = newDirection
+    if (!AUTO_PLAY) {
+        window.onkeydown = (event) => {
+            const newDirection = DIRECTIONS_KEYS[event.key]
+            if (newDirection && OPPOSITES[currentDirection] !== newDirection) {
+                changingDirection = newDirection
+            }
         }
     }
 
@@ -133,6 +222,10 @@ const play = () => {
         if (changingDirection) {
             currentDirection = changingDirection
             changingDirection = null
+        }
+
+        if(AUTO_PLAY) {
+            currentDirection = autoPlayNextDirection(snake, food)
         }
 
         const newSnake = walk(snake, food, currentDirection)
