@@ -30,12 +30,16 @@ const random = max => Math.floor(Math.random() * max)
 const generateFood = () => coord(random(WIDTH), random(HEIGHT))
 const cmpCoord = (a, b) => a.x === b.x && a.y === b.y
 const coordIsBody = (coord, snake) => snake.filter(cmpCoord.bind(null, coord)).length > 0
+const findBodyPos = (coord, snake) => snake.findIndex(cmpCoord.bind(null, coord))
 
 const applySnakeRules = (snake, food, cell) => {
-    if(cmpCoord(cell.coord, snake[0])) {
-        cell.classList.add('snake-head')
-    } else if(coordIsBody(cell.coord, snake)) {
-        cell.classList.add('snake-body')
+    const bodyPos = findBodyPos(cell.coord, snake)
+
+    if(bodyPos > -1) {
+        const posFactor = (bodyPos * 5) % 200
+
+        const green = posFactor > 100 ?  150 - (posFactor % 100) : 150 + posFactor
+        cell.style.background = `rgb(0 ${green} 0)`
     } else if (cmpCoord(cell.coord, food)) {
         cell.classList.add('food')
     }

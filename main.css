@@ -5,18 +5,9 @@
 #main td {
     width: 8px;
     height: 8px;
-    /* border: 1px solid #ccc; */
 }
 
 .food {
     background: red;
     border-radius: 8px;
-}
-
-.snake-body {
-    background: lightgreen;
-}
-
-.snake-head {
-    background: green;
 }
